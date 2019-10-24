@@ -1,0 +1,36 @@
+#!/bin/sh
+set -euo pipefail
+
+# Description: detects novaseq
+# Author: Christopher Medway
+# Date: 15/10/2019
+version="1.0.0"
+
+function processJobs {
+    echo "checking for jobs in $1 ..."
+
+    for path in $(find "$1" -maxdepth 2 -mindepth 2 -type f -name "RTAComplete.txt" -exec dirname '{}' \;); do
+
+        if [ ! -f $path/dragen-detected ]; then
+
+            # confirm that run has been detected
+            touch "$path"/dragen-detected
+
+            # extract run info from path
+            instrumentType=$(basename $(dirname "$path"))
+            run=$(basename "$path")
+
+            # log
+	    echo "path: $path" >> "$path"/dragen-detected
+            echo "run: $run" >> "$path"/dragen-detected
+            echo "instrumentType: $instrumentType" >> "$path"/dragen-detected
+            echo "running 1_IlluminaQC.sh" >> "$path"/dragen-detected
+
+            # launch IlluminaQC for demultiplexing and QC
+            bash /data/pipelines/DragenQC/DragenQC-0.0.1/DragenQC.sh $path
+
+        fi
+    done
+}
+
+processJobs "/mnt/novaseq"
